@@ -1,3 +1,5 @@
+import copy
+
 # 定数
 hw = 8
 hw2 = 64
@@ -30,6 +32,9 @@ class othello:
         
         # 石数 n_stones[0]: 黒 n_stones[1]: 白
         self.n_stones = [2, 2]
+
+        self.all_grid = []
+        self.sequence_num = 0
     
     
     # 合法手生成 合法手が1つ以上あればTrueを、なければFalseを返す
@@ -133,24 +138,49 @@ class othello:
         
         # 手番の更新
         self.player = 1 - self.player
+
+        # # 盤面を保存
+        # self.all_grid.append(grid)
+        self.sequence_num += 1
         
         # ひっくり返したのでTrueを返す
         return True
+
+    def return_one_move(self):
+        if self.all_grid != []:
+            self.sequence_num, now_grid = self.all_grid.pop()
+            self.grid = now_grid
+            print(f"{self.sequence_num}手目")
+            print(f"AI 着手({self.sequence_num}手目)")
+            self.print_info()
+            self.move_stdin()
+        else:
+            print(f"{self.sequence_num}手目です。これ以上戻れません。。。")
+            self.print_info()
+            self.move_stdin()
     
     # 標準入力からの入力で着手を行う
     def move_stdin(self):
-        coord = input(('黒' if self.player == black else '白') + ' 着手: ')
+        print()
+        grid_copy = copy.deepcopy(self.grid)
+        coord = input(('黒(人間)' if self.player == black else '白(人間)') + f' 着手({self.sequence_num+1}手目): ')
         try:
             y = int(coord[1]) - 1
             x = ord(coord[0]) - ord('A')
-            if not inside(y, x):
+            if x == 40 and y == 8: # I9
+                print(">>>>>>>>>>1手戻る", end=" -> ")
+                self.return_one_move()
+                return
+            if not inside(y, x): # 入力の形式ミス
                 x = ord(coord[0]) - ord('a')
                 if not inside(y, x):
                     print('座標を A1 や c5 のように入力してください')
                     self.move_stdin()
                     return
-            if not self.move(y, x):
+            if not self.move(y, x): # 着手失敗の時
                 self.move_stdin()
+            else:
+                self.all_grid.append((self.sequence_num-1, grid_copy))
         except:
             print('座標を A1 や c5 のように入力してください')
             self.move_stdin()
@@ -158,8 +188,9 @@ class othello:
     
     # 盤面などの情報を表示
     def print_info(self):
-        
+        print("-"*20)
         #盤面表示 X: 黒 O: 白 *: 合法手 .: 非合法手
+        print('( 1 2 3 4 5 6 7 8 )')
         print('  A B C D E F G H')
         for y in range(hw):
             print(y + 1, end=' ')
